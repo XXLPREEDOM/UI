@@ -7,7 +7,7 @@ export async function getChangesCommit(maxCount = 100) {
     // console.log('path', join(fileURLToPath(import.meta.url), '../../'));
 
     // 获取所有提交记录
-    const logs = await git.log({ maxCount }) 
+    const logs = await git.log({ maxCount })
     const authorList = new Set()
     // console.log('logs all', logs);
 
@@ -25,3 +25,12 @@ export async function getChangesCommit(maxCount = 100) {
         updateMessage
     }
 }
+
+
+export async function delay(time = 500) {
+    return new Promise((res) => {
+        setTimeout(res, time)
+    })
+}
+
+export const UPDATE_VERSION_COMMIT_MESSAGE = 'update:version'

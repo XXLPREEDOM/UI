@@ -11,8 +11,11 @@ import { join } from 'path'
 import chalk from 'chalk'
 import ora from 'ora'
 import inquirer from 'inquirer'
+import { execa } from 'execa'
+import prettier from 'prettier'
 import semver from 'semver'
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
+import { delay, UPDATE_VERSION_COMMIT_MESSAGE } from './utils.mjs';
 
 
 const git = simpleGit({ baseUrl: join(import.meta.url, '../../') })
@@ -48,9 +51,10 @@ async function checkVersion(alpha) {
 
     const packageInfo = JSON.parse(readFileSync(packagePath).toString())
     let { stdout } = await execa('pnpm', ['show', packageInfo.name, 'versions'], { serialization: 'advanced' })
-    console.log('stdout', stdout);
+    // console.log('stdout', stdout, typeof stdout);
     if (!stdout) throw new Error('获取库版本失败')
     if (stdout.split(',').length === 1) stdout = `["${stdout}"]`
+    // console.log('stdout split', stdout.split(','));
 
     const list = new Function(`return ${stdout}`)() || []
 
@@ -72,12 +76,70 @@ async function checkVersion(alpha) {
     spinner.succeed('写入新版本成功!')
     await delay()
 
+    console.log('message version ', UPDATE_VERSION_COMMIT_MESSAGE + ':' + version);
+    // 版本文件写入成功，提交到git远端
     await git.add('.')
     await git.commit(UPDATE_VERSION_COMMIT_MESSAGE + ':' + version)
     await git.pull()
     await git.push()
 }
 
+
+async function updateVersion(maxVersion = '0.0.0', alpha = false) {
+    const Ver = semver.parse(maxVersion)
+    console.log('ver', Ver);
+    const actionList = ['修复BUG', '升级功能或加功能', '大版本更新（重构）']
+    const { action } = await inquirer.prompt([
+        { type: 'list', name: 'action', message: '本次更新内容', choices: actionList }
+    ])
+
+    let versionList = []
+    if (action === actionList[0]) {
+        versionList = [semver.inc(Ver.version, 'patch')]
+    } else if (action === actionList[1]) {
+        versionList = [semver.inc(Ver.version, 'minor')]
+    } else {
+        versionList = [semver.inc(Ver.version, 'major')]
+    }
+    console.log('versionList', versionList);
+
+    if (alpha) {
+        const { version } = semver.parse(versionList[0])
+        const prerelease = Ver.prerelease?.[1] || 1
+
+        versionList[0] = semver.inc(version, 'prerelease', 'alpha', prerelease)
+        versionList.push(semver.inc(Ver.version, 'prerelease', 'alpha', prerelease + 1))
+    }
+
+    let res = await inquirer.prompt([
+        { type: 'list', name: 'version', message: `请选择新版本号, 当前最新版${maxVersion}`, choices: [...versionList, '自定义输入'] }
+    ])
+    // console.log('res', res); // { version: '0.1.1-alpha.1' }
+
+    if (res.version !== '自定义输入') return res.version
+
+    res = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'version',
+            message: '请输入版本号',
+            validate: val => {
+                console.log('输入的版本号:', val);
+
+                if (!semver.valid(val)) throw new Error('输入的版本号不合法')
+                if (semver.lt(val, maxVersion)) throw new Error('输入版本号不能小于旧版本')
+                if (alpha && !semver.parse(val).prerelease.includes('alpha')) {
+                    throw new Error('当前为dev分支，版本号必须带上 -alpha.1 标识')
+                }
+
+                // return Promise.resolve(val)
+                return val
+            }
+        }
+    ])
+    console.log('输入的版本号222:', val);
+    return res.version
+}
 
 async function main() {
     const branch = await git.branch()
