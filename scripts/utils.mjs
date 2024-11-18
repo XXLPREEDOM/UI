@@ -2,11 +2,26 @@ import { fileURLToPath } from 'url'
 import { join } from 'path'
 import { simpleGit } from 'simple-git'
 
-// const git = simpleGit({ baseDir: join(fileURLToPath(import.meta.url), '../../') })
-export async function getChangesCommit() {
+export async function getChangesCommit(maxCount = 100) {
     const git = simpleGit({ baseDir: join(fileURLToPath(import.meta.url), '../../') })
-    console.log('path', join(fileURLToPath(import.meta.url), '../../'));
+    // console.log('path', join(fileURLToPath(import.meta.url), '../../'));
 
-    
-    return 22
+    // 获取所有提交记录
+    const logs = await git.log({ maxCount }) 
+    const authorList = new Set()
+    // console.log('logs all', logs);
+
+    const updateMessage = logs.filter((item) => {
+        item.message
+        return !!item.message
+    }).map(item => {
+        authorList.add(item.author_name)
+        return item
+    });
+
+
+    return {
+        authorList,
+        updateMessage
+    }
 }
