@@ -1,6 +1,6 @@
 <template>
   <el-button class="xxl-button" v-bind="$attrs">
-    <slot>default</slot>
+    <slot>default button</slot>
   </el-button>
 </template>
 
