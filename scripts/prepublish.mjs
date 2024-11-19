@@ -16,9 +16,11 @@ import prettier from 'prettier'
 import semver from 'semver'
 import { readFileSync, writeFileSync } from 'fs';
 import { delay, UPDATE_VERSION_COMMIT_MESSAGE } from './utils.mjs';
+import { fileURLToPath } from 'url';
 
 
-const git = simpleGit({ baseUrl: join(import.meta.url, '../../') })
+const git = simpleGit({ baseUrl: join(fileURLToPath(import.meta.url), '../../') })
+// console.log('git path', join(fileURLToPath(import.meta.url), '../../'));
 const spinner = ora()
 const packagePath = join(process.cwd(), './package.json')
 
@@ -40,6 +42,7 @@ async function checkGitCommit() {
         throw new Error('请手动 commmit 后重试')
     }
 
+    // 仅自动提交  components下文件
     const { message } = await inquirer.prompt([{ type: 'input', message: '请输入commit 信息', name: 'message' }])
     await git.add('.')
     await git.commit(message)
@@ -83,7 +86,6 @@ async function checkVersion(alpha) {
     await git.pull()
     await git.push()
 }
-
 
 async function updateVersion(maxVersion = '0.0.0', alpha = false) {
     const Ver = semver.parse(maxVersion)
@@ -152,7 +154,6 @@ async function main() {
         // process.exit(1)
     }
     spinner.succeed('分支正确')
-
 
     // 提交检查
     await checkGitCommit();
