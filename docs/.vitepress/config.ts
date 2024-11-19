@@ -6,6 +6,7 @@ import genRoutes from './routes'
 console.log(genRoutes('sdk'));
 
 export default defineConfig({
+  base: '/UI/',
   title: 'DP Front Docs',
   description: 'A VitePress Site',
   themeConfig: {
