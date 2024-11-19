@@ -4,7 +4,7 @@ layout: home
 
 hero:
   name: 'XXL-UI Docs'
-  text: '前端组件文档'
+  text: '组件文档'
   tagline: UI组件、工具 说明
   actions:
     - theme: brand
