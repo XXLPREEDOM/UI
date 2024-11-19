@@ -1,6 +1,6 @@
 {
   "name": "xxl-ui-preedom",
-  "version": "0.0.1",
+  "version": "1.0.1-alpha.1",
   "type": "module",
   "description": "common ui",
   "main": "./dist/lib/index.js",
